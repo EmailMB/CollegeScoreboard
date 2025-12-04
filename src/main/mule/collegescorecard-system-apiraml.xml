@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <http:listener-config name="collegescorecard-system-apiraml-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8084" />
+    </http:listener-config>
+    <apikit:config name="collegescorecard-system-apiraml-config" api="resource::3259ae4d-f2fe-4761-bd1b-2d7ebb903fbe:collegescorecard-system-apiraml:3.0.1:raml:zip:collegescorecard-system-apiraml.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a6f55df0-b5bc-4578-9dc1-94c0ba458483" responseTimeout="60000">
+        <http:request-connection protocol="HTTPS" host="api.data.gov" port="443" />
+    </http:request-config>
+    <flow name="collegescorecard-system-apiraml-main">
+        <http:listener config-ref="collegescorecard-system-apiraml-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="collegescorecard-system-apiraml-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="collegescorecard-system-apiraml-console">
+        <http:listener config-ref="collegescorecard-system-apiraml-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="collegescorecard-system-apiraml-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\schools:collegescorecard-system-apiraml-config">
+        <logger level="INFO" doc:name="Logger" doc:id="05114bd4-e401-49f9-ad34-9e7af54905d8" message="#[output application/json&#10;---&#10;{&#10;    &quot;URL_QUE_SERA_CHAMADA&quot;: &quot;https://api.data.gov/ed/collegescorecard/v1/schools&quot;,&#10;    &quot;PARAMETROS_ENVIADOS&quot;: {&#10;        &quot;api_key&quot;: &quot;ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP&quot;, &#10;        &quot;fields&quot;: trim(attributes.queryParams.'_fields' default &quot;&quot;),&#10;        &quot;outros_filtros&quot;: (attributes.queryParams - &quot;_fields&quot;)&#10;    }&#10;}]"/>
+		<http:request method="GET" doc:name="Request" doc:id="a89c6898-5674-495a-aae6-0481fa3e1213" config-ref="HTTP_Request_configuration" path="/ed/collegescorecard/v1/schools">
+            <http:body ><![CDATA[#[null]]]></http:body>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+    // 1. Chave API
+    "api_key": "ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP",
+
+    // 2. Campo fields
+    "fields": trim(attributes.queryParams.'_fields' default "") as String,
+
+    // 3. Remove _fields, offset E limit dos parâmetros
+    (
+        (attributes.queryParams - "_fields" - "offset" - "limit") mapObject ((value, key) -> {
+            (key): value as String
+        })
+    )
+}]]]></http:query-params>
+        </http:request>
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.results map (item) -> {
+    school_id: item.id,
+    name: item['school.name'],
+    city: item['school.city'],
+    state: item['school.state'],
+    latitude: item['location.lat'],
+    longitude: item['location.lon']
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\schools\(id):collegescorecard-system-apiraml-config">
+        <http:request method="GET" doc:name="Request" doc:id="4f17d475-10e4-41ec-ac34-ec06e0f3b17b" config-ref="HTTP_Request_configuration" path="/ed/collegescorecard/v1/schools">
+            <http:query-params><![CDATA[#[output application/java
+---
+{
+	id : "#[attributes.uriParams.id]",
+	api_key :"ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP"
+}]]]></http:query-params>
+        </http:request>
+        <ee:transform doc:name="Transform Message">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="get:\schools\(id):collegescorecard-system-apiraml-config" />
+    </flow>
+</mule>
