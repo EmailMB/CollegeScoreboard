@@ -169,12 +169,24 @@ payload.results map (item) -> {
 ---
 {
 	id : "#[attributes.uriParams.id]",
-	api_key :"ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP"
+	api_key :"ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP",
+	"fields": "id,school.name,school.city,school.state,location.lat,location.lon,latest.cost.attendance.academic_year"
 }]]]></http:query-params>
         </http:request>
         <ee:transform doc:name="Transform Message">
             <ee:variables>
-                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+                <ee:set-variable variableName="id"><![CDATA[output application/json
+var school = payload.results[0] default {}
+---
+{
+    "school_id": school.id,
+    "name": school['school.name'],
+    "city": school['school.city'],
+    "state": school['school.state'],
+    "latitude": school['location.lat'],
+    "longitude": school['location.lon'],
+    "annual_cost": school['latest.cost.attendance.academic_year']
+}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
         <logger level="INFO" message="get:\schools\(id):collegescorecard-system-apiraml-config" />
