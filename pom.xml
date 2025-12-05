@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>3259ae4d-f2fe-4761-bd1b-2d7ebb903fbe</groupId>
-	<artifactId>collegescoreboard</artifactId>
+	<artifactId>college-scoreboard-system-api</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 

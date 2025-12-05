@@ -168,7 +168,7 @@ payload.results map (item) -> {
             <http:query-params><![CDATA[#[output application/java
 ---
 {
-	id : "#[attributes.uriParams.id]",
+	id : attributes.uriParams.id,
 	api_key :"ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP",
 	"fields": "id,school.name,school.city,school.state,location.lat,location.lon,latest.cost.attendance.academic_year"
 }]]]></http:query-params>
