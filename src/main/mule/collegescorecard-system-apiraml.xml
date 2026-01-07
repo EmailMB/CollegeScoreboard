@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
     <http:listener-config name="collegescorecard-system-apiraml-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8084" />
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
     </http:listener-config>
     <apikit:config name="collegescorecard-system-apiraml-config" api="resource::3259ae4d-f2fe-4761-bd1b-2d7ebb903fbe:collegescorecard-system-apiraml:3.0.1:raml:zip:collegescorecard-system-apiraml.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a6f55df0-b5bc-4578-9dc1-94c0ba458483" responseTimeout="60000">
-        <http:request-connection protocol="HTTPS" host="api.data.gov" port="443" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a6f55df0-b5bc-4578-9dc1-94c0ba458483" responseTimeout="60000" basePath="${college.basePath}">
+        <http:request-connection protocol="HTTPS" host="${college.host}" port="${college.port}" />
     </http:request-config>
-    <flow name="collegescorecard-system-apiraml-main">
+    <configuration-properties doc:name="Configuration properties" doc:id="756e5e78-80a2-4b5b-9a58-ba67a912ce80" file="api\dev.yaml" />
+	<api-gateway:autodiscovery apiId="20637220" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="078f4799-1192-47b2-9a18-ba09b2e0f06a" flowRef="collegescorecard-system-apiraml-main" />
+	<flow name="collegescorecard-system-apiraml-main">
         <http:listener config-ref="collegescorecard-system-apiraml-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
@@ -128,19 +131,23 @@ output application/json
     </flow>
     <flow name="get:\schools:collegescorecard-system-apiraml-config">
         <logger level="INFO" doc:name="Logger" doc:id="05114bd4-e401-49f9-ad34-9e7af54905d8" message="#[output application/json&#10;---&#10;{&#10;    &quot;URL_QUE_SERA_CHAMADA&quot;: &quot;https://api.data.gov/ed/collegescorecard/v1/schools&quot;,&#10;    &quot;PARAMETROS_ENVIADOS&quot;: {&#10;        &quot;api_key&quot;: &quot;ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP&quot;, &#10;        &quot;fields&quot;: trim(attributes.queryParams.'_fields' default &quot;&quot;),&#10;        &quot;outros_filtros&quot;: (attributes.queryParams - &quot;_fields&quot;)&#10;    }&#10;}]"/>
-		<http:request method="GET" doc:name="Request" doc:id="a89c6898-5674-495a-aae6-0481fa3e1213" config-ref="HTTP_Request_configuration" path="/ed/collegescorecard/v1/schools">
+		<http:request method="GET" doc:name="Request" doc:id="a89c6898-5674-495a-aae6-0481fa3e1213" config-ref="HTTP_Request_configuration" path="/schools">
             <http:body ><![CDATA[#[null]]]></http:body>
 			<http:query-params><![CDATA[#[output application/java
+var limit = (attributes.queryParams.limit default 20) as Number
+var offset = (attributes.queryParams.offset default 0) as Number
+var page = floor(offset / limit) // Ex: Offset 20 / Limit 20 = Página 1
 ---
 {
-    // 1. Chave API
     "api_key": "ALu9WbjydtZe6SxiiW6TELbz7oI6CZOYRNWsFQnP",
+    
+    // Parâmetros que a API do governo entende
+    "page": page,
+    "per_page": limit,
 
-    // 2. Campo fields
     "fields": trim(attributes.queryParams.'_fields' default "") as String,
-
-    // 3. Remove _fields, offset E limit dos parâmetros
     (
+        // Mantemos os filtros de estado/cidade, mas removemos os de controlo
         (attributes.queryParams - "_fields" - "offset" - "limit") mapObject ((value, key) -> {
             (key): value as String
         })
@@ -158,13 +165,14 @@ payload.results map (item) -> {
     city: item['school.city'],
     state: item['school.state'],
     latitude: item['location.lat'],
-    longitude: item['location.lon']
+    longitude: item['location.lon'],
+    annual_cost: item['latest.cost.tuition.in_state']
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
     </flow>
     <flow name="get:\schools\(id):collegescorecard-system-apiraml-config">
-        <http:request method="GET" doc:name="Request" doc:id="4f17d475-10e4-41ec-ac34-ec06e0f3b17b" config-ref="HTTP_Request_configuration" path="/ed/collegescorecard/v1/schools">
+        <http:request method="GET" doc:name="Request" doc:id="4f17d475-10e4-41ec-ac34-ec06e0f3b17b" config-ref="HTTP_Request_configuration" path="/schools">
             <http:query-params><![CDATA[#[output application/java
 ---
 {
@@ -185,7 +193,7 @@ var school = payload.results[0] default {}
     "state": school['school.state'],
     "latitude": school['location.lat'],
     "longitude": school['location.lon'],
-    "annual_cost": school['latest.cost.attendance.academic_year']
+    "annual_cost": school['latest.cost.tuition.in_state']
 }]]></ee:set-variable>
             </ee:variables>
         </ee:transform>

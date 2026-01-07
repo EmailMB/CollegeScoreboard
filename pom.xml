@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>3259ae4d-f2fe-4761-bd1b-2d7ebb903fbe</groupId>
-	<artifactId>college-scoreboard-system-api</artifactId>
+	<artifactId>college-scoreboard-system-api-app</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
@@ -14,8 +14,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<app.runtime>4.9.0</app.runtime>
-		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
+		<app.runtime>4.4.0</app.runtime>
+		<mule.maven.plugin.version>4.6.1</mule.maven.plugin.version>
 		<tags/>
 		<categories>[]</categories>
 		<fields>[]</fields>

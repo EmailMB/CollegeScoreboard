@@ -1,0 +1,7 @@
+http:
+  port: "8084"
+
+college:
+  host: "api.data.gov"
+  port: "443"
+  basePath: "/ed/collegescorecard/v1"
